@@ -1,0 +1,40 @@
+<?xml version="1.0" encoding="utf-8"?>
+
+<TableLayout
+        android:layout_width="fill_parent"
+        android:layout_height="fill_parent" xmlns:android="http://schemas.android.com/apk/res/android">
+    <TableRow
+            android:layout_width="fill_parent"
+            android:layout_height="fill_parent" android:layout_weight="1">
+        <Button
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="1. WebView"
+                android:id="@+id/web" android:layout_column="0" android:layout_weight="1"
+                android:layout_gravity="bottom"/>
+    </TableRow>
+    <TableRow
+            android:layout_width="fill_parent"
+            android:layout_height="fill_parent" android:layout_weight="1">
+        <Button
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="2. Загрузка изображений"
+                android:id="@+id/img" android:layout_column="0" android:layout_weight="1"
+                android:layout_gravity="bottom"/>
+    </TableRow>
+    <TableRow
+            android:layout_width="fill_parent"
+            android:layout_height="fill_parent" android:layout_weight="1">
+        <Button
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="3. Загрузка текста"
+                android:id="@+id/text" android:layout_column="0" android:layout_weight="1"
+                android:layout_gravity="bottom"/>
+    </TableRow>
+    <TableRow
+            android:layout_width="fill_parent"
+            android:layout_height="fill_parent" android:layout_weight="17">
+    </TableRow>
+</TableLayout>
