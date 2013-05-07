@@ -118,7 +118,7 @@ public class ChannelActivity extends Activity {
                 public void onItemClick(AdapterView<?> adapterView, View view, int i, long l) {
                     Map<String,String> item = news.get(i);
                     String url = item.get("link");
-                    Intent intent = new Intent("ru.isu.drevin.hw5.News", Uri.parse(postsTask.newsLinks[i]));
+                    Intent intent = new Intent("ru.isu.drevin.hw5.News", Uri.parse(url));
                     startActivity(intent);
                     //Toast.makeText(getApplicationContext(), "_"+l+"_", Toast.LENGTH_SHORT).show();
                 }
