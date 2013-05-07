@@ -27,6 +27,7 @@ public class DBHelper extends SQLiteOpenHelper {
         db.execSQL("CREATE TABLE rssNews (" +
                 " channel_id INTEGER," +
                 " key TEXT," +
+                " pubDate INTEGER," +
                 " title TEXT);");
 
         ContentValues cv = new ContentValues();
@@ -41,5 +42,9 @@ public class DBHelper extends SQLiteOpenHelper {
     }
 
     @Override
-    public void onUpgrade(SQLiteDatabase db, int oldVersion, int newVersion) {}
+    public void onUpgrade(SQLiteDatabase db, int oldVersion, int newVersion) {
+        if(oldVersion == 1 && newVersion == 2) {
+            db.execSQL("ALTER TABLE rssNews ADD COLUMN pubDate DATETIME");
+        }
+    }
 }

@@ -1,4 +1,9 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
     <string name="app_name">hw5</string>
+    <string name="channelName">Название канала</string>
+    <string name="channelURL">URL</string>
+    <string name="emptyURL">http://</string>
+    <string name="newChannelName">Новый Канал</string>
+    <string name="add">Добавить</string>
 </resources>

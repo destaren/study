@@ -1,15 +1,15 @@
 package ru.isu.drevin.hw5;
 
 import android.app.Activity;
+import android.content.ContentValues;
 import android.content.Intent;
+import android.database.Cursor;
+import android.database.sqlite.SQLiteDatabase;
 import android.net.Uri;
 import android.os.AsyncTask;
 import android.os.Bundle;
 import android.view.View;
-import android.widget.AdapterView;
-import android.widget.ArrayAdapter;
-import android.widget.ListView;
-import android.widget.Toast;
+import android.widget.*;
 import org.apache.http.HttpResponse;
 import org.apache.http.client.HttpClient;
 import org.apache.http.client.methods.HttpGet;
@@ -28,6 +28,10 @@ import java.io.InputStreamReader;
 import java.net.HttpURLConnection;
 import java.net.URL;
 import java.net.URLConnection;
+import java.util.ArrayList;
+import java.util.Date;
+import java.util.HashMap;
+import java.util.Map;
 import java.util.concurrent.TimeUnit;
 
 /**
@@ -38,11 +42,13 @@ import java.util.concurrent.TimeUnit;
  * To change this template use File | Settings | File Templates.
  */
 public class ChannelActivity extends Activity {
+
     DBHelper dbHelper;
     ListView listView;
     GetPostsTask postsTask;
+    String channelID;
 
-    String[] newsTitles, newsLinks;
+    ArrayList<Map<String, String>> news;
 
     @Override
     public void onCreate(Bundle savedInstanceState) {
@@ -53,13 +59,14 @@ public class ChannelActivity extends Activity {
         listView = (ListView) findViewById(R.id.postList);
 
         String url = getIntent().getStringExtra("url");
+        channelID = getIntent().getStringExtra("channelID");
 
         postsTask = (GetPostsTask) getLastNonConfigurationInstance();
         if(postsTask == null) {
             postsTask = new GetPostsTask();
             postsTask.execute(url);
         } else if (postsTask.getStatus() == AsyncTask.Status.FINISHED) {
-            setListViewListener(postsTask);
+            setListViewListener2();
         }
         postsTask.link(this);
     }
@@ -75,23 +82,60 @@ public class ChannelActivity extends Activity {
         listView.setOnItemClickListener(new AdapterView.OnItemClickListener() {
             @Override
             public void onItemClick(AdapterView<?> adapterView, View view, int i, long l) {
-                Intent intent = new Intent(Intent.ACTION_VIEW, Uri.parse(newsLinks[i]));
+                Map<String,String> item = news.get(i);
+                String url = item.get("link");
+                Intent intent = new Intent("ru.isu.drevin.hw5.News", Uri.parse(postsTask.newsLinks[i]));
                 startActivity(intent);
                 //Toast.makeText(getApplicationContext(), "_"+l+"_", Toast.LENGTH_SHORT).show();
             }
         });
     }
 
+    public void setListViewListener2() {
+        SQLiteDatabase db = dbHelper.getReadableDatabase();
+        Cursor c = db.query("rssNews", null, "channel_id = ?", new String[]{channelID}, null, null, "pubDate DESC");
+        if(c.getCount() > 0 && c.moveToFirst()) {
+            news = new ArrayList<Map<String, String>>(c.getCount());
+
+            int linkColPos = c.getColumnIndex("key");
+            int titleColPos = c.getColumnIndex("title");
+
+            do {
+                Map<String, String> map = new HashMap<String, String>();
+                map.put("link",c.getString(linkColPos));
+                map.put("title",c.getString(titleColPos));
+                news.add(map);
+            } while(c.moveToNext());
+
+            String[] from = {"title"};
+            int[] to = {android.R.id.text1};
+
+            SimpleAdapter adapter = new SimpleAdapter(getApplicationContext(), news, android.R.layout.simple_list_item_1, from, to);
+
+            listView.setAdapter(adapter);
+            listView.setOnItemClickListener(new AdapterView.OnItemClickListener() {
+                @Override
+                public void onItemClick(AdapterView<?> adapterView, View view, int i, long l) {
+                    Map<String,String> item = news.get(i);
+                    String url = item.get("link");
+                    Intent intent = new Intent("ru.isu.drevin.hw5.News", Uri.parse(postsTask.newsLinks[i]));
+                    startActivity(intent);
+                    //Toast.makeText(getApplicationContext(), "_"+l+"_", Toast.LENGTH_SHORT).show();
+                }
+            });
+        } else {
+            Toast.makeText(getApplicationContext(), "No news available", Toast.LENGTH_SHORT).show();
+        }
+    }
+
     static class GetPostsTask extends AsyncTask<String, Void, Void> {
 
         ChannelActivity activity = null;
-        String[] newsTitles, newsLinks;
+        String[] newsTitles, newsLinks, pubDates;
         boolean error = false;
 
         public void link(ChannelActivity act) {
             activity = act;
-            activity.newsTitles = newsTitles;
-            activity.newsLinks = newsLinks;
         }
 
         public void unLink() {
@@ -124,11 +168,24 @@ public class ChannelActivity extends Activity {
             super.onPostExecute(result);
 
             if(error) {
-                Toast.makeText(activity.getApplicationContext(), "Error, try again", Toast.LENGTH_SHORT).show();
+                Toast.makeText(activity.getApplicationContext(), "Connection error", Toast.LENGTH_SHORT).show();
+                activity.setListViewListener2();
                 return;
             }
             if(activity != null) {
-                activity.setListViewListener(this);
+                Date lastNewsDate = activity.getLastNewsDate();
+                for(int i = 0; i < newsTitles.length; i++) {
+                    Date date = new Date(pubDates[i]);
+                    if(date.after(lastNewsDate)) {
+                        ContentValues cv = new ContentValues();
+                        cv.put("channel_id", Integer.parseInt(activity.channelID));
+                        cv.put("key", newsLinks[i]);
+                        cv.put("title", newsTitles[i]);
+                        cv.put("pubDate", date.getTime() / 1000);
+                        long inserted = activity.dbHelper.getWritableDatabase().insert("rssNews",null,cv);
+                    }
+                }
+                activity.setListViewListener2();
             }
         }
 
@@ -206,18 +263,44 @@ public class ChannelActivity extends Activity {
             NodeList rssItems = document.getElementsByTagName("item");
             newsLinks = new String[rssItems.getLength()];
             newsTitles = new String[rssItems.getLength()];
+            pubDates = new String[rssItems.getLength()];
+
+
+            Date lastNewsDate = activity.getLastNewsDate();
+            SQLiteDatabase db = activity.dbHelper.getWritableDatabase();
 
             for(int i = 0; i < rssItems.getLength(); i++) {
                 Node rssItem = rssItems.item(i);
                 Element news = (Element) rssItem;
                 String title = news.getElementsByTagName("title").item(0).getFirstChild().getNodeValue();
                 String link = news.getElementsByTagName("link").item(0).getFirstChild().getNodeValue();
+                String pubDate = news.getElementsByTagName("pubDate").item(0).getFirstChild().getNodeValue();
+
                 newsTitles[i] = title;
                 newsLinks[i] = link;
+                pubDates[i] = pubDate;
                 //String pubDate = news.getElementsByTagName("pubDate").item(0).getNodeValue();
             }
 
             return true;
         }
+    }
+
+    public Date getLastNewsDate() {
+        Date lastDate = new Date(0);
+        SQLiteDatabase db = dbHelper.getReadableDatabase();
+
+        try {
+            Cursor c = db.query("rssNews", new String[]{"pubDate"}, null, null, null, null, "pubDate DESC");
+            if(c.getCount() > 0 && c.moveToFirst()) {
+                int dateColPos = c.getColumnIndex("pubDate");
+                long date = c.getInt(dateColPos);
+                lastDate = new Date(date*1000);
+            }
+        } catch (Exception e) {
+            return new Date(0);
+        }
+
+        return lastDate;
     }
 }
