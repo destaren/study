@@ -1,0 +1,8 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="app_name">hw7_106</string>
+    <string name="frag1_text">Фрагмент 1</string>
+    <string name="frag2_text">Фрагмент 2</string>
+    <string name="log">Лог</string>
+    <string name="find">Найти</string>
+</resources>

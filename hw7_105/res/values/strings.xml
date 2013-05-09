@@ -1,0 +1,10 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="app_name">hw7_105</string>
+    <string name="frag1_text">Фрагмент 1</string>
+    <string name="frag2_text">Фрагмент 2</string>
+    <string name="add">Добавить</string>
+    <string name="remove">Удалить</string>
+    <string name="replace">Заменить</string>
+    <string name="stack">Добавить в BackStack</string>
+</resources>
