@@ -1,0 +1,10 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="widget_name">Лаба 118</string>
+    <string name="red">КРА-А-АСНЫЙ</string>
+    <string name="green">Гриииин!</string>
+    <string name="blue">Цвет неба</string>
+    <string name="ok">Поехали!</string>
+    <string name="widget_text">Виджет лаба 118</string>
+    <string name="app_name">hw9_118</string>
+</resources>
